@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vape-free savings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAF1F4; --surface:#FFFFFF; --ink:#102A3A; --muted:#5B7383; --line:#C9D8E0; --accent:#1F8A70; --accent-soft:#CDEBE2; --warn:#B4442F;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1C24; --surface:#15303B; --ink:#E6F0F4; --muted:#8AA3B0; --line:#244452; --accent:#4CC9A6; --accent-soft:#1B4A40; --warn:#F08A72;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1C24; --surface:#15303B; --ink:#E6F0F4; --muted:#8AA3B0; --line:#244452; --accent:#4CC9A6; --accent-soft:#1B4A40; --warn:#F08A72;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:1.0625rem; line-height:1.5;
+}
+main{max-width:34rem; margin:0 auto; padding:2rem 1.25rem 3rem}
+h1,h2{margin:0; font-weight:800; letter-spacing:-0.01em}
+h2{font-size:1.15rem; margin-bottom:.75rem}
+p{margin:0}
+.muted{color:var(--muted)}
+
+.hero{padding:1rem 0 2rem}
+.hero .lead{font-size:1.1rem; color:var(--muted)}
+.money{
+  font-size:clamp(3.2rem,16vw,5.5rem); font-weight:800; line-height:1;
+  letter-spacing:-0.035em; font-variant-numeric:tabular-nums; margin:.35rem 0 .6rem;
+  overflow-wrap:anywhere;
+}
+.money .tail{font-size:.38em; color:var(--accent); letter-spacing:0; vertical-align:.95em; margin-left:.08em}
+.streak{font-size:1.15rem}
+.streak strong{font-weight:600}
+
+.block{border-top:1px solid var(--line); padding:1.5rem 0}
+.ahead{display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem}
+.ahead div{min-width:0}
+.ahead b{display:block; font-size:1.35rem; font-weight:600; font-variant-numeric:tabular-nums}
+.ahead span{font-size:.9rem; color:var(--muted)}
+
+.goalname{font-weight:600}
+.bar{height:.9rem; background:var(--accent-soft); border-radius:999px; overflow:hidden; margin:.6rem 0 .4rem}
+.bar i{display:block; height:100%; width:0; background:var(--accent); border-radius:999px; transition:width .6s ease}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+form{display:grid; gap:1rem}
+label{display:grid; gap:.3rem; font-weight:600; font-size:.95rem}
+label small{font-weight:400; color:var(--muted)}
+input{
+  font:inherit; font-weight:400; color:var(--ink); background:var(--surface);
+  border:1px solid var(--line); border-radius:.6rem; padding:.7rem .8rem; width:100%; min-width:0;
+}
+.row{display:grid; grid-template-columns:1fr 1fr; gap:.75rem}
+button{
+  font:inherit; font-weight:600; border-radius:.6rem; padding:.8rem 1rem; cursor:pointer;
+  border:1px solid var(--accent); background:var(--accent); color:var(--bg);
+}
+button.quiet{background:transparent; color:var(--ink); border-color:var(--line)}
+button.danger{background:transparent; color:var(--warn); border-color:var(--warn)}
+:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.actions{display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.25rem}
+.weekly{font-size:.95rem; color:var(--muted)}
+.status{font-size:.9rem; color:var(--muted); min-height:1.4em; margin-top:.5rem}
+.log{list-style:none; padding:0; margin:.5rem 0 0; font-size:.95rem}
+.log li{padding:.35rem 0; border-bottom:1px dashed var(--line); display:flex; justify-content:space-between; gap:1rem}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<main>
+  <section id="setup" hidden>
+    <h1 style="font-size:2rem;margin-bottom:.5rem">Track what quitting saves you</h1>
+    <p class="muted" style="margin-bottom:1.5rem">Enter when you quit and what vaping cost you. The counter runs from there.</p>
+  </section>
+
+  <section id="dash" hidden>
+    <div class="hero">
+      <p class="lead">You've kept</p>
+      <div class="money" id="money" aria-live="off">$0.00</div>
+      <p class="streak" id="streak"></p>
+    </div>
+
+    <div class="block">
+      <h2>If you keep going</h2>
+      <div class="ahead">
+        <div><b id="p30">$0</b><span>30 days in</span></div>
+        <div><b id="p180">$0</b><span>6 months in</span></div>
+        <div><b id="p365">$0</b><span>1 year in</span></div>
+      </div>
+    </div>
+
+    <div class="block" id="goalBlock" hidden>
+      <h2>Saving for <span class="goalname" id="goalName"></span></h2>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="goalBar"><i id="goalFill"></i></div>
+      <p class="muted" id="goalText"></p>
+    </div>
+
+    <div class="block" id="slipBlock">
+      <h2>Slipped?</h2>
+      <p class="muted" style="margin-bottom:.75rem">Restart the clock. Your earlier savings stay in the total.</p>
+      <button class="danger" id="slipBtn" type="button">Restart from now</button>
+      <ul class="log" id="log"></ul>
+    </div>
+  </section>
+
+  <section class="block" id="settings">
+    <h2 id="settingsTitle">Settings</h2>
+    <form id="form">
+      <label>Quit date and time
+        <input type="datetime-local" id="fQuit" required>
+      </label>
+      <div class="row">
+        <label>Price each <small>pod, disposable, or juice</small>
+          <input type="number" id="fPrice" min="0" step="0.01" inputmode="decimal" placeholder="20.00" required>
+        </label>
+        <label>How many a week <small>on average</small>
+          <input type="number" id="fCount" min="0" step="0.1" inputmode="decimal" placeholder="2" required>
+        </label>
+      </div>
+      <p class="weekly" id="weekly"></p>
+      <div class="row">
+        <label>Saving for <small>optional</small>
+          <input type="text" id="fGoal" maxlength="40" placeholder="New SD card">
+        </label>
+        <label>Goal amount <small>optional</small>
+          <input type="number" id="fGoalAmt" min="0" step="1" inputmode="decimal" placeholder="150">
+        </label>
+      </div>
+      <div class="actions">
+        <button type="submit" id="saveBtn">Save</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<script type="application/json" id="state">{}</script>
+<script>
+(function(){
+  // Capture pristine source before any rendering touches the DOM.
+  var SRC = "<!doctype html>\n" + document.documentElement.outerHTML;
+  var STATE_RE = /<script type="application\/json" id="state">[\s\S]*?<\/script>/;
+  var LS_KEY = "vapefree:state";
+
+  var state = {};
+  try { state = JSON.parse(document.getElementById("state").textContent) || {}; } catch(e){ state = {}; }
+  if (!state.quit) {
+    try { var ls = localStorage.getItem(LS_KEY); if (ls) state = JSON.parse(ls) || {}; } catch(e){}
+  }
+  state.banked = state.banked || 0;     // savings from earlier streaks
+  state.slips = state.slips || [];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n, d){ return n.toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:d,maximumFractionDigits:d}); };
+  var weekly = function(){ return (+state.price||0) * (+state.count||0); };
+  var perMs = function(){ return weekly() / (7*864e5); };
+  var DAY = 864e5;
+
+  var artifactNs = null, readOnly = false;
+  if (window.claude && claude.use) {
+    claude.use("artifact").then(function(ns){ artifactNs = ns; }).catch(function(){});
+  }
+
+  function toLocalInput(ms){
+    var d = new Date(ms); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0,16);
+  }
+
+  function fillForm(){
+    $("fQuit").value = toLocalInput(state.quit || Date.now());
+    $("fPrice").value = state.price ?? "";
+    $("fCount").value = state.count ?? "";
+    $("fGoal").value = state.goal || "";
+    $("fGoalAmt").value = state.goalAmt || "";
+    updateWeekly();
+  }
+  function updateWeekly(){
+    var w = (+$("fPrice").value||0) * (+$("fCount").value||0);
+    $("weekly").textContent = w ? "That's " + fmt(w,2) + " a week, about " + fmt(w*52/12,0) + " a month." : "";
+  }
+  ["fPrice","fCount"].forEach(function(id){ $(id).addEventListener("input", updateWeekly); });
+
+  function streakText(ms){
+    if (ms < 0) return "Your quit time is in the future. The counter starts then.";
+    var d = Math.floor(ms/DAY), h = Math.floor(ms%DAY/36e5), m = Math.floor(ms%36e5/6e4);
+    var parts = [];
+    if (d) parts.push(d + (d===1?" day":" days"));
+    if (h || d) parts.push(h + (h===1?" hour":" hours"));
+    if (!d) parts.push(m + (m===1?" minute":" minutes"));
+    return "in <strong>" + parts.join(", ") + "</strong> without vaping.";
+  }
+
+  function totalSaved(now){
+    return state.banked + Math.max(0, now - state.quit) * perMs();
+  }
+
+  function render(){
+    var has = !!state.quit;
+    $("setup").hidden = has;
+    $("dash").hidden = !has;
+    $("settingsTitle").textContent = has ? "Settings" : "Get started";
+    if (!has) return;
+
+    var now = Date.now(), saved = totalSaved(now), dollars = fmt(saved,2);
+    var tail = String(Math.floor((saved*1e4) % 100)).padStart(2,"0");
+    $("money").innerHTML = dollars + '<span class="tail">' + tail + "</span>";
+    $("streak").innerHTML = streakText(now - state.quit);
+
+    var w = weekly();
+    [["p30",30],["p180",182.5],["p365",365]].forEach(function(p){
+      var target = state.quit + p[1]*DAY;
+      var amt = state.banked + p[1]*DAY*perMs();
+      $(p[0]).textContent = fmt(amt,0);
+      $(p[0]).parentNode.style.opacity = now >= target ? .45 : 1;
+    });
+
+    var gA = +state.goalAmt||0;
+    $("goalBlock").hidden = !(gA > 0);
+    if (gA > 0){
+      var pct = Math.min(100, saved/gA*100);
+      $("goalName").textContent = state.goal || "your goal";
+      $("goalFill").style.width = pct + "%";
+      $("goalBar").setAttribute("aria-valuenow", Math.round(pct));
+      if (pct >= 100) $("goalText").textContent = "Done. You've covered it.";
+      else {
+        var left = gA - saved, days = w ? Math.ceil(left / (w/7)) : null;
+        $("goalText").textContent = fmt(left,2) + " to go" + (days ? ", about " + days + (days===1?" day":" days") + " at this pace." : ".");
+      }
+    }
+
+    var log = $("log"); log.innerHTML = "";
+    state.slips.slice(-5).reverse().forEach(function(s){
+      var li = document.createElement("li");
+      var a = document.createElement("span"); a.textContent = new Date(s.at).toLocaleDateString();
+      var b = document.createElement("span"); b.className = "muted"; b.textContent = "after " + Math.max(0,Math.round(s.streakDays*10)/10) + " days";
+      li.appendChild(a); li.appendChild(b); log.appendChild(li);
+    });
+  }
+
+  function persist(){
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){}
+    if (!artifactNs || readOnly) {
+      $("status").textContent = artifactNs === null && !readOnly ? "Saved on this device." : "Saved on this device. This view can't update the shared page.";
+      return Promise.resolve();
+    }
+    var json = JSON.stringify(state).replace(/</g,"\\u003c");
+    var html = SRC.replace(STATE_RE, '<script type="application/json" id="state">' + json + "<\/script>");
+    $("status").textContent = "Saving…";
+    return artifactNs.publish(html).then(function(){
+      $("status").textContent = "Saved.";
+    }).catch(function(err){
+      var c = err && err.code;
+      if (c === "not_writer" || c === "not_granted") { readOnly = true; $("status").textContent = "Saved on this device only."; }
+      else if (c === "conflict") { $("status").textContent = "Updated elsewhere. Reloading the latest."; }
+      else { $("status").textContent = "Saved on this device. Couldn't sync the page right now."; }
+    });
+  }
+
+  $("form").addEventListener("submit", function(e){
+    e.preventDefault();
+    var q = new Date($("fQuit").value).getTime();
+    if (isNaN(q)) { $("status").textContent = "Pick a quit date and time."; return; }
+    state.quit = q;
+    state.price = +$("fPrice").value || 0;
+    state.count = +$("fCount").value || 0;
+    state.goal = $("fGoal").value.trim();
+    state.goalAmt = +$("fGoalAmt").value || 0;
+    render(); persist();
+  });
+
+  $("slipBtn").addEventListener("click", function(){
+    if (!confirm("Restart the clock from now? Savings so far stay in your total.")) return;
+    var now = Date.now();
+    state.banked = totalSaved(now);
+    state.slips.push({at: now, streakDays: (now - state.quit)/DAY});
+    state.quit = now;
+    fillForm(); render(); persist();
+  });
+
+  fillForm(); render();
+  setInterval(function(){ if (state.quit) render(); }, 250);
+})();
+</script>
+</body>
+</html>
